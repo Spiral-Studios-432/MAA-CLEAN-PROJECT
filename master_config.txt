@@ -1,0 +1,1 @@
+Refer to the Master Config Google Doc for Pydantic schemas.
