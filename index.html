@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAA Owner Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        // Load the main component from the file path
+        fetch('./project_outputs/generated_code/OwnerDashboard.jsx')
+            .then(response => response.text())
+            .then(code => {
+                const exports = {};
+                const require = (name) => {
+                    if (name === 'react') return React;
+                    return {};
+                };
+                // Execute the code using Babel
+                const transformed = Babel.transform(code, { presets: ['react'] }).code;
+                
+                // Simple module execution environment
+                const moduleFunc = new Function('require', 'exports', transformed);
+                moduleFunc(require, exports);
+
+                const App = exports.default;
+                
+                // Render the application
+                if (App) {
+                    ReactDOM.render(<App />, document.getElementById('root'));
+                {/* The fetch('./project_outputs...') part is where the code is actually loaded */}
+                } else {
+                    console.error('App component not found in module exports.');
+                }
+            })
+            .catch(error => console.error('Error loading component:', error));
+    </script>
+</body>
+</html>

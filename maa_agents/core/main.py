@@ -6,14 +6,11 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from datetime import datetime
 import asyncio
-
-# --- 1. CONFIGURATION AND INITIALIZATION ---
+from fastapi.middleware.cors import CORSMiddleware 
 
 FIREBASE_PROJECT_ID = "YOUR_FIREBASE_PROJECT_ID" 
 AUD_CONVERSION_RATE = 1.50
 USER_ID_MOCK = "admin_owner_123"
-
-# --- 2. DATA SCHEMAS (Pydantic Models) ---
 
 class AgentStatus(BaseModel):
     agent_active_status: bool = Field(True)
@@ -33,14 +30,11 @@ class AuditLogEntry(BaseModel):
     cost_usd: float
     status: str 
 
-# --- MOCK FIRESTORE DATA STORE ---
 mock_db = {
     f"users/{USER_ID_MOCK}/config": AgentStatus().model_dump(),
     f"users/{USER_ID_MOCK}/metrics": AgentMetric().model_dump(),
     f"users/{USER_ID_MOCK}/audit_log": []
 }
-
-# --- 3. LIFECYCLE AND APP INSTANCE ---
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -48,13 +42,10 @@ async def lifespan(app: FastAPI):
     yield
     print("FastAPI Application Shutting Down...")
 
-app = FastAPI(
-    title="MAA Backend Proxy (Agent Orchestration)",
-    version="1.0.0",
-    lifespan=lifespan
-)
+app = FastAPI(title="MAA Backend Proxy (Agent Orchestration)", version="1.0.0", lifespan=lifespan)
 
-# --- 4. API ENDPOINTS (Owner Controls) ---
+origins = ["http://localhost", "http://localhost:8000", "http://127.0.0.1:8000"]
+app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"],)
 
 @app.get("/api/status", response_model=AgentMetric)
 async def get_agent_status_metrics():
@@ -63,24 +54,14 @@ async def get_agent_status_metrics():
 @app.post("/api/veto/toggle", response_model=AgentStatus)
 async def toggle_veto_switch(status: AgentStatus):
     mock_db[f"users/{USER_ID_MOCK}/config"] = status.model_dump()
-    
-    new_log = AuditLogEntry(
-        agent_name="ADMIN (YOU)",
-        action=f"VETO {'ACTIVATED' if not status.agent_active_status else 'RELEASED'}.",
-        tokens=0,
-        cost_usd=0.0,
-        status="ERROR" if not status.agent_active_status else "READY",
-    ).model_dump()
-    
+    new_log = AuditLogEntry(agent_name="ADMIN (YOU)", action=f"VETO {'ACTIVATED' if not status.agent_active_status else 'RELEASED'}.", tokens=0, cost_usd=0.0, status="ERROR" if not status.agent_active_status else "READY",).model_dump()
     mock_db[f"users/{USER_ID_MOCK}/audit_log"].append(new_log)
-    
     return status
 
 @app.get("/api/audit/log", response_model=List[AuditLogEntry])
 async def get_audit_log_stream():
     return mock_db[f"users/{USER_ID_MOCK}/audit_log"]
 
-# --- 5. AGENT SIMULATION ENDPOINT (MOCK FOR DEVELOPMENT) ---
 @app.post("/api/agent/simulate_run")
 async def simulate_agent_run():
     current_config = mock_db[f"users/{USER_ID_MOCK}/config"]
@@ -97,12 +78,6 @@ async def simulate_agent_run():
     metrics["total_simulated_cost_aud"] = metrics["total_simulated_cost_usd"] * metrics["cost_conversion_rate"]
     metrics["last_run_timestamp"] = datetime.utcnow()
     
-    mock_db[f"users/{USER_ID_MOCK}/audit_log"].append(AuditLogEntry(
-        agent_name="Agent 5 (Coder)",
-        action=f"GENERATE: Wrote code for Lead Scoring function.",
-        tokens=tokens_used,
-        cost_usd=cost_usd,
-        status="SUCCESS"
-    ).model_dump())
+    mock_db[f"users/{USER_ID_MOCK}/audit_log"].append(AuditLogEntry(agent_name="Agent 5 (Coder)", action=f"GENERATE: Wrote code for Lead Scoring function.", tokens=tokens_used, cost_usd=cost_usd, status="SUCCESS").model_dump())
     
     return {"message": "Agent execution successful", "tokens": tokens_used}
