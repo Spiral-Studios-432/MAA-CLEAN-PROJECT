@@ -148,7 +148,7 @@ const App = () => {
                         </p>
                     </div>
 
-                    <div className="bg-white p-6 rounded-xl shadow-lg border-b-4 border-blue-600 md:col-span-1">
+                    <div className="bg-white p-6 rounded-xl shadow-lg border-b-4 border-blue-600">
                         <p className="text-sm font-medium text-gray-500">SIMULATION/TESTING</p>
                         <h2 className="text-xl font-bold text-gray-900 mt-1">Run Test Agent</h2>
                          <button onClick={runSimulatedAgent} disabled={isVetoActive} 

@@ -9,7 +9,6 @@ import asyncio
 
 # --- 1. CONFIGURATION AND INITIALIZATION ---
 
-# MANDATORY: Replace this with your actual Firebase project ID later
 FIREBASE_PROJECT_ID = "YOUR_FIREBASE_PROJECT_ID" 
 AUD_CONVERSION_RATE = 1.50
 USER_ID_MOCK = "admin_owner_123"
